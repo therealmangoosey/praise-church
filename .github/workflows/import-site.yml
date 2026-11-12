@@ -1,0 +1,118 @@
+name: Import Praise Church website
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'cantell-cross--6iorti75.preview.emergentagent.com*.zip'
+      - '.github/workflows/import-site.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  import-site:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+
+      - name: Extract and install the website
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          ZIP="cantell-cross--6iorti75.preview.emergentagent.com (1).zip"
+          if [[ ! -f "$ZIP" ]]; then
+            ZIP="cantell-cross--6iorti75.preview.emergentagent.com.zip"
+          fi
+          if [[ ! -f "$ZIP" ]]; then
+            echo "Could not find the uploaded Praise Church ZIP in the repository root."
+            exit 1
+          fi
+
+          WORK_DIR="$(mktemp -d)"
+          unzip -q "$ZIP" -d "$WORK_DIR"
+
+          APP_DIR="$WORK_DIR/cantell-cross--6iorti75.preview.emergentagent.com"
+          test -s "$WORK_DIR/index.html"
+          test -s "$APP_DIR/static/js/bundle.js"
+          test -s "$APP_DIR/favicon.svg"
+
+          rm -rf static
+          mkdir -p static/js
+          cp "$WORK_DIR/index.html" ./index.html
+          cp "$APP_DIR/static/js/bundle.js" ./static/js/bundle.js
+          cp "$APP_DIR/favicon.svg" ./favicon.svg
+
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          path = Path("index.html")
+          html = path.read_text(encoding="utf-8")
+
+          html = html.replace(
+              "cantell-cross--6iorti75.preview.emergentagent.com/favicon.svg",
+              "/favicon.svg",
+          )
+          html = html.replace(
+              "cantell-cross--6iorti75.preview.emergentagent.com/static/js/bundle.js",
+              "/static/js/bundle.js",
+          )
+
+          # Remove scripts injected by the preview/export environment. Keep the
+          # actual compiled site bundle and all of the site's own markup.
+          def clean_script(match):
+              tag = match.group(0)
+              lower = tag.lower()
+              injected = (
+                  "emergent-main.js",
+                  "data-emergent-overlay",
+                  "__emergent_overlay__",
+                  "visual-edit-overlay.js",
+                  "cdn.tailwindcss.com",
+                  "static.cloudflareinsights.com",
+                  "posthog.init",
+                  "ap.emergent.sh",
+                  "performanceServerTiming",
+                  "window.__cf$cv$params",
+              )
+              if any(token.lower() in lower for token in injected):
+                  return ""
+              return tag
+
+          html = re.sub(
+              r"<script\b[\s\S]*?</script\s*>",
+              clean_script,
+              html,
+              flags=re.IGNORECASE,
+          )
+
+          path.write_text(html, encoding="utf-8")
+          PY
+
+          # The archive and preview-only helper files are no longer needed.
+          rm -f ./*.zip
+          rm -rf \
+            "cantell-cross--6iorti75.preview.emergentagent.com" \
+            "assets.emergent.sh" \
+            "static.cloudflareinsights.com" \
+            "__emergent_overlay__"
+
+          touch .nojekyll
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+
+          if git diff --cached --quiet; then
+            echo "The website files are already up to date."
+          else
+            git commit -m "Import completed Praise Church website"
+            git push origin HEAD:main
+          fi
