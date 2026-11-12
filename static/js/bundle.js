@@ -530,11 +530,11 @@ function About() {
         "x-source-type": "computed",
         "x-source-editable": "false",
         children: [{
-          src: "/images/service-welcome.png",
+          src: "/images/service-welcome.webp",
           alt: "Worship and welcome at a Praise Harvest service",
           tilt: "-rotate-[1.5deg]"
         }, {
-          src: "/images/service-preaching.png",
+          src: "/images/service-preaching.webp",
           alt: "The Word being preached at a Praise Harvest service",
           tilt: "rotate-[1.5deg]"
         }].map((img, i) => /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_4__.jsxDEV)(framer_motion__WEBPACK_IMPORTED_MODULE_0__.motion.div, {
@@ -2067,6 +2067,7 @@ function Hero({
     id: "home",
     ref: ref,
     className: "relative min-h-screen flex flex-col overflow-hidden",
+    style: { backgroundImage: "linear-gradient(rgba(250,246,236,0.68), rgba(250,246,236,0.82)), url('/images/cantell-school.jpg')", backgroundSize: "cover", backgroundPosition: "center" },
     "data-testid": "hero-section",
     "x-file-name": "Hero",
     "x-line-number": "29",
@@ -2134,7 +2135,7 @@ function Hero({
         "x-id": "Hero_42_8",
         "x-dynamic": "false",
         children: /*#__PURE__*/(0,react_jsx_dev_runtime__WEBPACK_IMPORTED_MODULE_8__.jsxDEV)("img", {
-          src: "/images/service-worship.png",
+          src: "/images/service-worship.webp",
           alt: "",
           className: "w-full h-[300px] lg:h-[380px] object-cover rounded-md",
           "x-file-name": "Hero",
